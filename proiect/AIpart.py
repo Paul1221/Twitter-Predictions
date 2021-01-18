@@ -4,12 +4,27 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 import datetime
-from fbprophet import Prophet
 import pandas as pd
 
+jsons = []
 
-with open("sample.json", "r") as infile:
-    tweets = json.load(infile)
+# with open("sample.json", "r") as infile:
+#     jsons.append(json.load(infile))
+
+# with open("sample_bucharest.json", "r") as infile:
+#     jsons.append(json.load(infile))
+
+# with open("sample_rezist.json", "r") as infile:
+#     jsons.append(json.load(infile))
+
+with open("sample_selfie.json", "r") as infile:
+    jsons.append(json.load(infile))
+
+tweets = []
+
+
+for el in jsons:
+    tweets.extend(el)
 
 nr_of_tweets = len(tweets)
 
@@ -50,12 +65,12 @@ print(time_centroids)
 
 x = []
 
-for i in range(0, (nr_of_tweets-2)):
+for i in range(0, (nr_of_tweets-10)):
     tweet = [favorites_clusters[i], listed_clusters[i], followers_clusters[i], friends_clusters[i],
              statuses_clusters[i], time_clusters[i], sentiment_clusters[i], objectivity_clusters[i]]
     x.append(tweet)
 
-x, y = np.array(x), np.array(retweet_list[0:-2])
+x, y = np.array(x), np.array(retweet_list[0:-10])
 
 x_ = PolynomialFeatures(degree=2, include_bias=False).fit_transform(x)
 
@@ -75,13 +90,38 @@ for nr in y_pred:
     if nr > max:
         max = nr
         argmax = i
-    print(i)
-    print(nr)
     i += 1
 #print(y_pred.where(a=max(y_pred)))
 print(max)
 print(argmax)
-print(time_list[argmax])
+print("best hour", time_list[argmax])
+
+norm_data = {}
+
+for x,y in zip(time_list[0:-10], y_pred):
+    if x not in norm_data:
+        norm_data[x] = [y]
+    else:
+        norm_data[x].append(y)
+
+norm_data_f = {}
+
+for x in norm_data:
+    norm_data_f[x] = sum(norm_data[x])/len(norm_data[x])
+
+print("normdataf", norm_data_f)
+
+import collections
+
+od = collections.OrderedDict(sorted(norm_data_f.items()))
+
+import matplotlib.pyplot as plt
+
+plt.bar(range(len(od)), list(od.values()), align='center')
+plt.xticks(range(len(od)), list(od.keys()))
+
+plt.show()
+
 
 
 print(time_list)
@@ -89,35 +129,4 @@ print(len(time_list))
 print(retweet_list)
 print(len(retweet_list))
 
-'''
-    partea 2
-'''
 
-data = []
-
-for i in range(0, len(time_list)):
-    data.append((datetime.datetime.strptime(str(time_list[i]), '%H'), y[i]))
-
-print(data)
-
-df = pd.DataFrame.from_records(data, columns=['ds', 'y'])
-
-print(df)
-
-m = Prophet()
-m.fit(df)
-
-da = m.make_future_dataframe(periods=24, freq='h')
-dada = m.predict(da)
-print(dada.ds[2])
-
-i = 0
-
-for x in dada.yhat:
-    if x == max(dada.yhat):
-        break
-    i += 1
-
-
-besthour = int(dada.ds[i].strftime('%H'))
-print(besthour)

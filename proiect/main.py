@@ -9,11 +9,13 @@ consumer_secret = 'YMSpwyFQOYxGOEGTeNxqIjd14g5hkIJ8T1zbapgno8PqkWv7eM'
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 api = tweepy.API(auth)
-search = api.search(q='#selfie', result_type='mixed', count=100, until='2021-01-06')
+search = api.search(q='#facebook', result_type='mixed', count=500, until='2021-01-17')
 
 tweets = []
 i = 0
+
 for tweet in search:
+    print(tweet)
     if tweet.retweet_count != 0:
         i += 1
         blob = TextBlob(tweet.text, analyzer=NaiveBayesAnalyzer())
